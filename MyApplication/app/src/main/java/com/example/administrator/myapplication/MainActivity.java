@@ -62,58 +62,6 @@ public class MainActivity extends AppCompatActivity {
     Timer timer = new Timer();
     Handler myhandler;
     Time t = new Time();
-
-    class mytask extends TimerTask {
-        @Override
-        public void run() {
-            try {
-                timer.cancel();
-                int[] a = new int[2];
-                a = get_start_end_time();
-                t.setToNow();
-                Integer x = t.hour;
-                //分为是否包含24
-                Random rand = new Random();
-                //random.nextInt(max)%(max-min+1) + min
-                int time = get_inter_time();
-                int i = 3, delay;
-                if (time < 10) {
-                    i = 0;
-                }
-                int max = time + i;
-                int min = time - i;
-                delay = rand.nextInt(max) % (i + 1) + min;
-                if (a[0] > a[1]) {
-                    //包24小时
-                    if ((a[0] < x && a[1] > 24) || (x < a[1] && x >= 0)) {
-                        //timer.cancel();
-                        myhandler.sendEmptyMessage(1);
-                        timer = null;
-                        timeTask.cancel();
-                        timer = new Timer();
-                        timeTask = null;
-                        timeTask = new mytask();
-                        timer.schedule(timeTask, delay * 1000 * 60, 10000000);
-                    }
-                } else {
-                    //不包24
-                    if (a[0] < x && a[1] > x) {
-                        myhandler.sendEmptyMessage(1);
-                        //timer.cancel();
-                        timer = null;
-                        timeTask.cancel();
-                        timer = new Timer();
-                        timeTask = null;
-                        timeTask = new mytask();
-                        timer.schedule(timeTask, delay * 1000 * 60, 10000000);
-                    }
-                }
-            } catch (Exception e) {
-                String x = "cap";
-            }
-        }
-    }
-    mytask timeTask = new mytask();
     private static String SMS_SEND_ACTIOIN = "SMS_SEND_ACTIOIN";
     private static String SMS_DELIVERED_ACTION = "SMS_DELIVERED_ACTION";
 
@@ -339,13 +287,7 @@ public class MainActivity extends AppCompatActivity {
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialogInterface, int i) {
-                                        timer.cancel();
-                                        timer = null;
-                                        timeTask.cancel();
-                                        timer = new Timer();
-                                        timeTask = null;
-                                        timeTask = new mytask();
-                                        timer.schedule(timeTask, 0, get_inter_time() * 1000);
+                                        timeCao.startTime();
                                     }
                                 }).setNegativeButton("清楚上次记录数据",
                                 new DialogInterface.OnClickListener() {
@@ -410,7 +352,7 @@ public class MainActivity extends AppCompatActivity {
                                                 String sql = "insert into send_sms_table VALUES (" + sms[2] + ",0)";
                                                 db.execSQL(sql);
                                             }
-                                            timer.schedule(timeTask, 0, get_inter_time() * 1000);
+                                            timeCao.startTime();
                                         }
                                     }).show();
                         }
@@ -443,32 +385,6 @@ public class MainActivity extends AppCompatActivity {
         return false;
     }
 
-    //取出设置的时长
-    public int get_inter_time() {
-        Cursor cursor = db.rawQuery("select * from set_table", null);
-        int inter = 20;
-        if (cursor != null) {
-            while (cursor.moveToNext()) {
-                inter = Integer.parseInt(cursor.getString(cursor.getColumnIndex("interva_time")).toString());
-            }
-        }
-        return inter;
-    }
-
-    //取出设置id的开始与结束时间
-    public int[] get_start_end_time() {
-        int[] res = new int[2];
-        Cursor cursor = db.rawQuery("select * from set_table", null);
-        res[0] = 21;
-        res[1] = 8;
-        while (cursor.moveToNext()) {
-            res[0] = Integer.parseInt(cursor.getString(cursor.getColumnIndex("start_time")).toString());
-            res[1] = Integer.parseInt(cursor.getString(cursor.getColumnIndex("end_time")).toString());
-        }
-        return res;
-    }
-
-    //校验是否为手机号
     //保存短信内容
     public void saveText(int id, String text) {
         try {
@@ -545,34 +461,6 @@ public class MainActivity extends AppCompatActivity {
                     , Toast.LENGTH_SHORT).show();
         }
     }
-
-    //随机选择短信
-    public String selectText() {
-        try {
-            String sql = "select * from save_text_table";
-            ArrayList<String> Array_text = new ArrayList<String>();
-            Cursor cursor = db.rawQuery(sql, null);
-            int max = 0;
-            while (cursor.moveToNext()) {
-                String con = cursor.getString(cursor
-                        .getColumnIndex("content"));
-                if (con.length() > 0) {
-                    Array_text.add(cursor.getString(cursor
-                            .getColumnIndex("content")));
-                    max++;
-                }
-            }
-            Random rand = new Random();
-            int i = rand.nextInt(max);
-            return Array_text.get(i).toString();
-        } catch (Exception e) {
-            Toast.makeText(MainActivity.this, "请编辑短信内容"
-                    , Toast.LENGTH_SHORT).show();
-            return "nihao";
-        }
-
-    }
-
 
 }
 
