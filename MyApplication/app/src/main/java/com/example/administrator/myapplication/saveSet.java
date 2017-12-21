@@ -5,6 +5,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.widget.Toast;
 
+import java.util.ArrayList;
+import java.util.Random;
+
 /**
  * Created by Administrator on 2017/12/20.
  */
@@ -12,14 +15,14 @@ import android.widget.Toast;
 public class saveSet {
     private Context context;
     private SQLiteDatabase db;
-    public saveSet(Context context){
+    public saveSet(Context context,SQLiteDatabase db){
         this.context=context;
+        this.db=db;
     }
-    public boolean save(SQLiteDatabase db,Integer start_time,Integer end_time,Integer inter_time){
+    public boolean save(Integer start_time,Integer end_time,Integer inter_time){
         try{
             String sql="";
             String sql1="";
-            this.db=db;
             //把数设置的数据导入数据库
             Cursor cursor=db.rawQuery("select * from set_table where id=1",null);
             if (cursor!=null){
@@ -64,5 +67,42 @@ public class saveSet {
             res[1] = Integer.parseInt(cursor.getString(cursor.getColumnIndex("end_time")).toString());
         }
         return res;
+    }
+    //得到随机短信
+    public String selectText() {
+        try {
+            String sql = "select * from save_text_table";
+            ArrayList<String> Array_text = new ArrayList<String>();
+            Cursor cursor = db.rawQuery(sql, null);
+            int max = 0;
+            while (cursor.moveToNext()) {
+                String con = cursor.getString(cursor
+                        .getColumnIndex("content"));
+                if (con.length() > 0) {
+                    Array_text.add(cursor.getString(cursor
+                            .getColumnIndex("content")));
+                    max++;
+                }
+            }
+            Random rand = new Random();
+            int i = rand.nextInt(max);
+            return Array_text.get(i).toString();
+        } catch (Exception e) {
+            Toast.makeText(context, "请编辑短信内容"
+                    , Toast.LENGTH_SHORT).show();
+            return "";
+        }
+
+    }
+    //返回发送的号码
+    public String sendPone(){
+        String sending="";
+        Cursor cursor = db.rawQuery("select * from send_sms_table  where is_send=0 limit 0,1", null);
+        if (cursor!=null){
+            while (cursor.moveToNext()){
+                sending = cursor.getString(cursor.getColumnIndex("num")).toString();
+            }
+        }
+        return sending;
     }
 }

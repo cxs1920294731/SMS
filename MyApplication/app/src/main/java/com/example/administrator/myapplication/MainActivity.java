@@ -50,7 +50,8 @@ public class MainActivity extends AppCompatActivity {
     SQLiteDatabase db;
     MyData dehelper;
     readContacts read = new readContacts(this);
-    saveSet saveset = new saveSet(this);
+    saveSet saveset;
+    TimerT timeCao;
     //记录需要群发消息的号码列表
     ArrayList<String> sendList = new ArrayList<String>();
     //记录不匹配的号码列表
@@ -112,19 +113,19 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
-
     mytask timeTask = new mytask();
-
     private static String SMS_SEND_ACTIOIN = "SMS_SEND_ACTIOIN";
     private static String SMS_DELIVERED_ACTION = "SMS_DELIVERED_ACTION";
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //显示要发送的号码
         dehelper = new MyData(this, "mySend.db3", null, 1);
         db = dehelper.getReadableDatabase();
+        saveset= new saveSet(this,db);
+        timeCao=new TimerT(this,db);
         //发送内容
         content1 = (EditText) findViewById(R.id.content1);
         content2 = (EditText) findViewById(R.id.content2);
@@ -149,7 +150,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //sendsms.SendMsgIfSuc("15986816196", "nihao");
-                setContentView(R.layout.sendsms);
+                //setContentView(R.layout.sendsms);
+                timeCao.startTime();
             }
         });
         //点击保存按钮，保存到数据库中
@@ -284,35 +286,9 @@ public class MainActivity extends AppCompatActivity {
                 Integer start_time = Integer.parseInt(StartTime.getText().toString());
                 Integer end_time = Integer.parseInt(endTime.getText().toString());
                 Integer inter_time = Integer.parseInt(IntervaTime.getText().toString());
-                saveset.save(db, start_time, end_time, inter_time);
+                saveset.save(start_time, end_time, inter_time);
             }
         });
-        //定时器运行的事件
-        myhandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                if (msg.what == 1) {
-                    String sending, text;
-                    Cursor cursor = db.rawQuery("select * from send_sms_table  where is_send=0 limit 0,1", null);
-                    if (cursor != null) {
-                        while (cursor.moveToNext()) {
-                            // 得到手机号码
-                            sending = cursor.getString(cursor.getColumnIndex("num")).toString();
-                            text = selectText();
-                            if (sending == "" || sending == null) {
-                                timer.cancel();
-                            } else {
-                                Toast.makeText(MainActivity.this, text
-                                        , Toast.LENGTH_SHORT).show();
-                                //SendMsgIfSuc(sending, text);
-                            }
-                        }
-                    }
-
-                }
-                ;
-            }
-        };
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -447,7 +423,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
@@ -597,6 +572,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
 
 }
 
